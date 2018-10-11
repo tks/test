@@ -1,0 +1,97 @@
+# coding: utf-8
+"""FutabaのRS405,RS406CB制御用ライブラリ
+"""
+import serial,struct
+
+class RSC_U485:
+    def __init__(self,port,baudrate):
+        self.ser = serial.Serial(
+        port=port,
+        baudrate=baudrate,
+        bytesize=serial.EIGHTBITS,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        timeout=1)
+
+    def bau_change(self,cId):
+        sendbuf = []
+        #パケット作成
+        sendbuf.append(0x0A) #1 SIZE
+        sendbuf.append(0x04) #2 CMD
+        sendbuf.append(0x00) #3 OP
+        sendbuf.append((cid&0x00FF)) #4 ID
+        sendbuf.append(0x00) #6 DATA2
+        sendbuf.append(0x00) #7 DATA2
+        sendbuf.append(0x00) #8 DATA2
+        sendbuf.append(0x00) #9 ADR
+        sendbuf.append(0x01) #10A CNT
+        # チェックサムの計算
+        sum = sendbuf[2]
+        
+        for x in range(0,7):
+            sum = sum ^ sendbuf[x]
+
+        sendbuf.append(sum)  # Sum    チェックサム
+
+        # 送信
+        for x in range(0):
+            self.ser.write(struct.pack('B',sendbuf.pop(0)));
+        return
+
+    def change_normal(self,cId):
+        sendbuf = []
+        #パケット作成
+        sendbuf.append(0x08) #1 SIZE
+        sendbuf.append(0x04) #2 CMD
+        sendbuf.append(0x00) #3 OP
+        sendbuf.append((cid&0x00FF)) #4 ID
+        sendbuf.append(0x00) #5 DATA1
+        sendbuf.append(0x28) #6 ADR
+        sendbuf.append(0x01) #7 CNT
+        # チェックサムの計算
+        sum = sendbuf[2]
+        
+        for x in range(0,7):
+            sum = sum ^ sendbuf[x]
+
+        sendbuf.append(sum)  # Sum    チェックサム
+
+        # 送信
+        for x in range(8):
+            self.ser.write(struct.pack('B',sendbuf.pop(0)));
+        return
+
+    def move(self,cId):
+        sendbuf = []
+        #パケット作成
+        sendbuf.append(0x09) #1 SIZE
+        sendbuf.append(0x04) #2 CMD
+        sendbuf.append(0x00) #3 OP
+        sendbuf.append((cid&0x00FF)) #4 ID
+        sendbuf.append(0x50) #5 DATA1
+        sendbuf.append(0x46) #6 DATA2
+        sendbuf.append(0x2A) #7 ADR
+        sendbuf.append(0x01) #8 CNT
+        # チェックサムの計算
+        sum = sendbuf[2]
+        
+        for x in range(0,8):
+            sum = sum ^ sendbuf[x]
+
+        sendbuf.append(sum)  # Sum    チェックサム
+
+        # 送信
+        for x in range(9):
+            self.ser.write(struct.pack('B',sendbuf.pop(0)));
+        return
+
+if __name__ == '__main__':
+    servo = RSC_U485('/dev/ttyUSB0',460800)
+    servo.change_normal(0)
+    servo.move(0)
+
+
+
+
+
+
